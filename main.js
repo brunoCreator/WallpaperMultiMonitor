@@ -188,6 +188,8 @@ var uploadButton = document.createElement('button');
 uploadButton.innerHTML = 'Upload Image';
 mainControls.appendChild(uploadButton);
 
+var image = new Image();
+var context = canvas.getContext('2d');
 /* When the image is uploaded add to the background of the canvas */
 uploadButton.onclick = function() {
   var fileInput = document.createElement('input');
@@ -197,12 +199,10 @@ uploadButton.onclick = function() {
     var reader = new FileReader();
     reader.onload = function(e) {
       var dataURL = e.target.result;
-      var image = new Image();
       image.src = dataURL;
       image.onload = function() {
         canvas.width = image.width;
         canvas.height = image.height;
-        var context = canvas.getContext('2d');
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
       };
     };
@@ -211,6 +211,7 @@ uploadButton.onclick = function() {
   fileInput.click();
 };
 
+var link = document.createElement('button');
 
 /* add a button that copy what is behind each box and insert below */
 var copyButton = document.createElement('button');
@@ -245,6 +246,9 @@ canvasCopy.width = totalWidth;
 
 var cLeft = 0;
 
+contextCopy.fillStyle = "white";
+contextCopy.fillRect(0, 0, canvasCopy.width, canvasCopy.height);
+
 document.body.appendChild(canvasCopy);
   for (var i = 0; i < boxes.length; i++) {
     var box = boxes[i];
@@ -255,17 +259,71 @@ document.body.appendChild(canvasCopy);
     
     var cWidth = ((width*maxHight)/height);
 
-
     contextCopy.drawImage(canvas, left, top, width, height, cLeft, 0, cWidth, maxHight);
 
     cLeft = cLeft + cWidth;
   }
   var img = document.createElement('img');
+
+ link.onclick = () => downloadURI( canvasCopy.toDataURL(),generateId());
+
   img.src = canvasCopy.toDataURL();
-  document.body.appendChild(img);
-  canvasCopy.remove();
+
+canvasCopy.download ="img.png";
+  results.appendChild(img);
+  //canvasCopy.remove();
 };
 
+var slider = document.createElement('input');
+slider.type = 'range';
+slider.min = 0;
+slider.max = 360;
+slider.value = 0;
+slider.oninput = function() {
+  var angle = slider.value * Math.PI / 180;
+  var width = image.width;
+  var height = image.height;
+  var newWidth = Math.abs(width * Math.cos(angle)) + Math.abs(height * Math.sin(angle));
+  var newHeight = Math.abs(width * Math.sin(angle)) + Math.abs(height * Math.cos(angle));
+  canvas.width = newWidth;
+  canvas.height = newHeight;
+  context.translate(newWidth / 2, newHeight / 2);
+  context.rotate(angle);
+  context.drawImage(image, -width / 2, -height / 2);
+};
+
+mainControls.appendChild(slider);
+var clearButton = document.createElement('button');
+clearButton.innerHTML = 'Clear Results';
+mainControls.appendChild(clearButton);
+clearButton.onclick = function() {
+results.innerHTML = '';
+};
+
+
+function dec2hex (dec) {
+  return dec.toString(16).padStart(2, "0")
+}
+
+// generateId :: Integer -> String
+function generateId (len) {
+  var arr = new Uint8Array((len || 40) / 2)
+  window.crypto.getRandomValues(arr)
+  return Array.from(arr, dec2hex).join('')
+}
+
+function downloadURI(uri, name) {
+  var link = document.createElement("a");
+  link.download = name;
+  link.href = uri;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  delete link;
+}
+
+  link.innerHTML = 'Download Image';
+  mainControls.appendChild(link);
 // var button = document.createElement('button');
 // button.innerHTML = 'Join';
 // document.body.appendChild(button);
